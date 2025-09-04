@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAL Control System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 HAL Control System</h1>
+            <p>House of Automated Leaks - HVAC Training Interface</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <button class="btn btn-danger" id="allOffBtn">ALL OFF</button>
+        </div>
+
+        <div class="main-content">
+            <div class="servos-section">
+                <h2>Servo Controls</h2>
+                <div class="servos-grid" id="servosGrid">
+                    <!-- Servo controls will be generated here -->
+                </div>
+            </div>
+
+            <div class="scenes-section">
+                <h2>Scene Management</h2>
+                <div class="scenes-controls">
+                    <div class="scenes-grid" id="scenesGrid">
+                        <!-- Scene buttons will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <h3>Activity Log</h3>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">System started</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
