@@ -7,10 +7,14 @@ A web-based control system for HVAC training equipment with servo-controlled dam
 
 - **Real-time Web Interface**: Control servos from any device with a web browser
 - **Multi-user Support**: Multiple people can connect and see live updates
-- **Scene Management**: Save and recall preset damper configurations
+- **Config Mode**: Toggle between normal operation and configuration modes to prevent accidental changes
+- **Enhanced Scene Management**: Save/recall preset configurations with custom names, descriptions, and lock protection
+- **User-Friendly Display**: 0-100% scale for valve positions instead of raw servo values
+- **Visual Indicators**: Multiple display styles (bar, gate graphic, percentage) for at-a-glance status
+- **Customizable Names**: Configure servo names like "Return", "Kitchen", "Make-up Air" in config.py
 - **Safety Limits**: Automatic enforcement of servo position limits
 - **Live Updates**: WebSocket communication for real-time feedback
-- **Responsive Design**: Works on phones, tablets, and desktops
+- **Responsive Design**: Optimized for touchscreens, tablets, and desktops
 
 ## Quick Start
 
@@ -61,20 +65,51 @@ house_of_automated_leaks/
 
 ## Usage
 
+### Operation Modes
+
+#### Normal Mode (Default)
+Safe operation mode for day-to-day use:
+- Adjust servo positions freely
+- Recall any scene
+- Locked scenes cannot be overwritten
+- Prevents accidental configuration changes
+
+#### Config Mode
+Full control for setup and maintenance:
+- Click **"Config Mode"** button (turns orange when active)
+- Edit scene names, descriptions, and lock status
+- Save over locked scenes
+- Modify any configuration
+
 ### Servo Control
-- **Individual Control**: Use sliders, input boxes, or +/- buttons
-- **Fine Tuning**: +/- buttons move in 32μs increments
-- **Safety Limits**: Positions automatically clamped to safe range (1984-7232)
+- **Percentage Display**: Positions shown as 0-100% (0=closed, 100=open)
+- **Custom Names**: Each servo displays its configured name (Return, Kitchen, etc.)
+- **Visual Indicators**: See valve opening with bar graph, gate graphic, or percentage display
+- **Individual Control**: Use sliders or +/- buttons for fine control
 - **Real-time Updates**: All connected users see position changes instantly
 
 ### Scene Management
-- **Save Scene**: Click "Save" button to capture current positions
-- **Recall Scene**: Click "Recall Scene X" to restore saved positions
-- **8 Scene Slots**: Scenes 1-8 available
-- **Persistent Storage**: Scenes saved as JSON files in `/scenes` directory
+
+#### Saving Scenes
+1. Adjust servos to desired positions
+2. Click **"Save"** on any scene slot
+3. If scene exists, confirm overwrite (shows scene name and description)
+4. Locked scenes require Config Mode to modify
+
+#### Scene Metadata (Config Mode only)
+1. Enter **Config Mode**
+2. Click **"Edit"** on any saved scene
+3. Set custom name (e.g., "Full Airflow", "Bedroom Test")
+4. Add description (e.g., "All vents 50% open for baseline")
+5. Lock scene to prevent accidental changes
+
+#### Recalling Scenes
+- Click **"Recall"** button to restore saved positions
+- All servos move to saved values simultaneously
+- Empty slots show "Empty Slot X"
 
 ### Emergency Stop
-- **ALL OFF Button**: Immediately sets all servos to position 0 (closed)
+- **ALL OFF Button**: Immediately closes all valves (sets to 0%)
 
 ## Technical Details
 
@@ -85,19 +120,55 @@ house_of_automated_leaks/
 - **Data Storage**: JSON files for scene persistence
 
 ### Configuration
-Key settings in `config.py`:
+
+Customize your system by editing `config.py`:
+
+#### Servo Names
+```python
+SERVO_NAMES = {
+    0: "Return",
+    1: "Kitchen",
+    2: "Make-up Air",
+    3: "Living Room",
+    # ... customize for your installation
+}
+```
+
+#### Visual Display Style
+```python
+VISUAL_DISPLAY_STYLE = "bar"  # Options: "bar", "rectangle", "percentage", "all"
+```
+- **bar**: Horizontal gradient progress bar (default)
+- **rectangle**: Physical gate representation with dimensions
+- **percentage**: Large numeric percentage display
+- **all**: Show all three styles side-by-side
+
+#### Gate Dimensions
+```python
+GATE_DIMENSIONS = {
+    0: {"width": 1, "height": 5},  # 1" × 5" opening
+    1: {"width": 5, "height": 5},  # 5" × 5" opening
+    # ... configure per servo
+}
+```
+
+#### Other Settings
 - `NUM_SERVOS = 8` (channels 0-7)
 - `MIN_POSITION = 1984` (496μs pulse width)
 - `MAX_POSITION = 7232` (1808μs pulse width)
 - `NUDGE_AMOUNT = 128` (32μs increments)
+- `SHOW_RAW_VALUES = False` (show raw values alongside percentages)
+- `MAX_SCENES = 8` (number of scene slots)
 
 ### API Endpoints
-- `GET /api/status` - Get current servo positions
-- `POST /api/servo/{id}/position` - Set servo position
+- `GET /api/config` - Get system configuration (servo names, display style, etc.)
+- `GET /api/status` - Get current servo positions (includes percentage and names)
+- `POST /api/servo/{id}/position` - Set servo position (raw value)
 - `POST /api/servo/{id}/nudge` - Nudge servo +/-
 - `POST /api/all-off` - Turn all servos off
-- `GET /api/scenes` - Get available scenes
-- `POST /api/scenes/{id}/save` - Save current scene
+- `GET /api/scenes` - Get available scenes (with names, descriptions, lock status)
+- `POST /api/scenes/{id}/save` - Save current scene (with optional name, description, locked)
+- `POST /api/scenes/{id}/update` - Update scene metadata only (name, description, locked)
 - `POST /api/scenes/{id}/recall` - Recall saved scene
 
 ## Development
