@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HAL Control System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 </head>
 <body>
@@ -19,7 +19,10 @@
                 <span class="status-indicator" id="statusIndicator"></span>
                 <span id="statusText">Connecting...</span>
             </div>
-            <button class="btn btn-danger" id="allOffBtn">ALL OFF</button>
+            <div class="status-controls">
+                <button class="btn btn-config" id="configModeBtn">Config Mode</button>
+                <button class="btn btn-danger" id="allOffBtn">ALL OFF</button>
+            </div>
         </div>
 
         <div class="main-content">
@@ -48,6 +51,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=2"></script>
 </body>
 </html>

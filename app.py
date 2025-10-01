@@ -18,14 +18,22 @@ servo_controller = ServoController()
 @app.route('/')
 def index():
     """Main control interface"""
-    return render_template('index.html')
+    return render_template('index.html', config=Config)
 
 @app.route('/api/status')
 def get_status():
     """Get current servo positions"""
     try:
         positions = servo_controller.get_servo_status()
-        return jsonify({'success': True, 'positions': positions})
+        # Add servo names to the response
+        servo_data = {}
+        for servo_id, position in positions.items():
+            servo_data[servo_id] = {
+                'position': position,
+                'percentage': Config.position_to_percentage(position),
+                'name': Config.get_servo_name(servo_id)
+            }
+        return jsonify({'success': True, 'positions': positions, 'servo_data': servo_data})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -87,11 +95,41 @@ def get_scenes():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/scenes/<int:scene_id>/update', methods=['POST'])
+def update_scene_metadata(scene_id):
+    """Update scene metadata (name, description, locked status)"""
+    try:
+        data = request.get_json()
+        servo_controller.update_scene_metadata(scene_id, data)
+        return jsonify({'success': True, 'message': f'Scene {scene_id} updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/config')
+def get_config():
+    """Get system configuration for frontend"""
+    try:
+        config_data = {
+            'num_servos': Config.NUM_SERVOS,
+            'servo_names': Config.SERVO_NAMES,
+            'max_scenes': Config.MAX_SCENES,
+            'visual_display_style': Config.VISUAL_DISPLAY_STYLE,
+            'gate_dimensions': Config.GATE_DIMENSIONS,
+            'show_raw_values': Config.SHOW_RAW_VALUES
+        }
+        return jsonify({'success': True, 'config': config_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/scenes/<int:scene_id>/save', methods=['POST'])
 def save_scene(scene_id):
     """Save current positions as a scene"""
     try:
-        servo_controller.save_scene(scene_id)
+        data = request.get_json() or {}
+        name = data.get('name', f'Scene {scene_id}')
+        description = data.get('description', '')
+        locked = data.get('locked', False)
+        servo_controller.save_scene(scene_id, name=name, description=description, locked=locked)
         return jsonify({'success': True, 'message': f'Scene {scene_id} saved'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400

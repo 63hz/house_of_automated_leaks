@@ -86,19 +86,31 @@ class ServoController:
         for servo_id in range(self.config.NUM_SERVOS):
             self.set_servo_position(servo_id, 0)
     
-    def save_scene(self, scene_id: int) -> None:
+    def save_scene(self, scene_id: int, name: str = None, description: str = '', locked: bool = False) -> None:
         """Save current servo positions as a scene"""
         if not 1 <= scene_id <= self.config.MAX_SCENES:
             raise ValueError(f"Scene ID must be between 1 and {self.config.MAX_SCENES}")
-        
+
         positions = self.get_servo_status()
+
+        # Preserve existing metadata if updating
+        scene_file = os.path.join(self.config.SCENES_DIR, f"scene_{scene_id}.json")
+        existing_data = {}
+        if os.path.exists(scene_file):
+            try:
+                with open(scene_file, 'r') as f:
+                    existing_data = json.load(f)
+            except Exception:
+                pass
+
         scene_data = {
             'scene_id': scene_id,
-            'positions': positions,
-            'description': f"Scene {scene_id}"
+            'name': name or existing_data.get('name', f'Scene {scene_id}'),
+            'description': description or existing_data.get('description', ''),
+            'locked': locked if locked is not None else existing_data.get('locked', False),
+            'positions': positions
         }
-        
-        scene_file = os.path.join(self.config.SCENES_DIR, f"scene_{scene_id}.json")
+
         with open(scene_file, 'w') as f:
             json.dump(scene_data, f, indent=2)
     
@@ -127,9 +139,34 @@ class ServoController:
                     with open(scene_file, 'r') as f:
                         scene_data = json.load(f)
                         scenes[scene_id] = {
-                            'description': scene_data.get('description', f'Scene {scene_id}'),
+                            'name': scene_data.get('name', f'Scene {scene_id}'),
+                            'description': scene_data.get('description', ''),
+                            'locked': scene_data.get('locked', False),
                             'positions': scene_data['positions']
                         }
                 except Exception:
                     continue  # Skip corrupted scene files
         return scenes
+
+    def update_scene_metadata(self, scene_id: int, metadata: dict) -> None:
+        """Update scene metadata without changing positions"""
+        if not 1 <= scene_id <= self.config.MAX_SCENES:
+            raise ValueError(f"Scene ID must be between 1 and {self.config.MAX_SCENES}")
+
+        scene_file = os.path.join(self.config.SCENES_DIR, f"scene_{scene_id}.json")
+        if not os.path.exists(scene_file):
+            raise FileNotFoundError(f"Scene {scene_id} not found")
+
+        with open(scene_file, 'r') as f:
+            scene_data = json.load(f)
+
+        # Update only provided metadata fields
+        if 'name' in metadata:
+            scene_data['name'] = metadata['name']
+        if 'description' in metadata:
+            scene_data['description'] = metadata['description']
+        if 'locked' in metadata:
+            scene_data['locked'] = metadata['locked']
+
+        with open(scene_file, 'w') as f:
+            json.dump(scene_data, f, indent=2)
